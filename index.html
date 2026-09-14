@@ -36,20 +36,6 @@
   header.top{ padding:28px 0 20px; display:flex; justify-content:space-between; align-items:flex-end; gap:16px; flex-wrap:wrap; border-bottom:1px solid var(--border); margin-bottom:24px;}
   header.top h1{ font-size:1.5rem; font-weight:700; margin:0 0 6px; letter-spacing:-.01em; text-wrap:balance;}
   header.top .sub{ color:var(--muted); font-size:.86rem; }
-  header.top .meta{ text-align:right; color:var(--muted); font-size:.78rem; line-height:1.6; }
-  .badge{ display:inline-block; background:var(--surface-2); border:1px solid var(--border); color:var(--ink-2); font-size:.72rem; padding:3px 9px; border-radius:99px; margin-right:6px;}
-
-  .tiles{ display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:28px;}
-  @media (max-width:820px){ .tiles{grid-template-columns:repeat(2,1fr);} }
-  .tile{ background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:16px 18px; box-shadow:var(--shadow);}
-  .tile .lbl{ font-size:.74rem; color:var(--muted); display:flex; align-items:center; gap:6px; margin-bottom:8px;}
-  .dot{ width:8px; height:8px; border-radius:50%; display:inline-block;}
-  .tile .val{ font-size:1.5rem; font-weight:600; }
-  .tile .unit{ font-size:.85rem; color:var(--muted); font-weight:500; margin-left:2px;}
-  .tile .chg{ font-size:.78rem; margin-top:6px; }
-  .chg.up{ color:var(--up); } .chg.down{ color:var(--down); }
-  .tile .period{ font-size:.7rem; color:var(--muted); margin-top:2px;}
-
   section{ margin-bottom:34px; }
   .sec-head{ display:flex; align-items:baseline; justify-content:space-between; margin-bottom:12px; flex-wrap:wrap; gap:8px;}
   .sec-head h2{ font-size:1.05rem; font-weight:700; margin:0; }
@@ -116,39 +102,7 @@
       <h1>구매(자재)팀 · 원자재·환율 주간 대시보드</h1>
       <div class="sub">1주차 시황 리포트 &mdash; USD/CNY · USD/JPY · WTI 유가 · 한국 소비자물가지수(CPI)</div>
     </div>
-    <div class="meta">
-      <div><span class="badge">데이터 기준 2026-09-11 (실시간 시세 조회 기준)</span></div>
-      <div>환율·유가 실시간 시세 · CPI 월별 지수·상승률</div>
-    </div>
   </header>
-
-  <div class="tiles">
-    <div class="tile">
-      <div class="lbl"><i class="dot" style="background:var(--cny)"></i>USD/CNY</div>
-      <div class="val num">6.7078</div>
-      <div class="chg num " id="cny-chg">전일대비 +0.00%</div>
-      <div class="period">2026-09-11 실시간 시세</div>
-    </div>
-    <div class="tile">
-      <div class="lbl"><i class="dot" style="background:var(--jpy)"></i>USD/JPY</div>
-      <div class="val num">153.54</div>
-      <div class="chg num up" id="jpy-chg">전일대비 +0.02%</div>
-      <div class="period">2026-09-11 실시간 시세</div>
-    </div>
-    <div class="tile">
-      <div class="lbl"><i class="dot" style="background:var(--wti)"></i>WTI 유가</div>
-      <div class="val num">$95.43</div>
-      <div class="chg num down" id="wti-chg">전일대비 -0.65%</div>
-      <div class="period">2026-09-11 실시간 시세</div>
-    </div>
-    <div class="tile">
-      <div class="lbl"><i class="dot" style="background:var(--cpi)"></i>한국 CPI 상승률</div>
-      <div class="val num">2.3%</div>
-      <div class="chg num" id="cpi-chg">전월대비 -0.1%p</div>
-      <div class="period">2025-12 전년동월대비</div>
-    </div>
-  </div>
-  <div class="fxt-note" style="margin-top:2px; margin-bottom:24px;">위 4개 요약 카드 중 USD/CNY·USD/JPY·WTI 유가는 <b>실시간 시세</b>(Investing.com, 2026-09-11 조회 기준)이며, 아래 ①번 히스토리 그래프는 FRED 월평균 통계(2026년 8월까지)로 기준 시점이 서로 다릅니다. 이 페이지는 자동으로 매일 갱신되지 않으며, 조회 시점의 스냅샷입니다.</div>
 
   <section>
     <div class="sec-head">
@@ -202,7 +156,6 @@
 <li><b>⑦</b> 공급완화, 재상승(2026.08): 美 원유재고 감소와 중동 정세 재악화 조짐이 겹치며 83달러대로 재차 반등</li></ul></div>
       <div class="chart-note"><b>전망</b>: 호르무즈 해협 리스크가 진정되지 않을 경우 단기적으로 85~100달러권까지 추가 상승할 가능성이 있습니다.  <br><b>근거</b>: 9월 들어 재점화된 미·이란 군사적 긴장, 호르무즈 해협을 지나는 전 세계 원유 해상수송량 비중(약 20%).</div>
     </div>
-    <div class="fxt-note" style="margin-top:14px;">FRED(Federal Reserve Economic Data) WTISPLC(WTI 현물유가) 월평균 시리즈 실측치입니다 (2023.01~2026.08 전 구간).</div>
   </section>
 
   <section>
@@ -462,32 +415,32 @@
           
         <tr>
           <td class="fxt-name">① 매매기준율<span class="fxt-en">Basic Exchange Rate</span></td>
-          <td class="fxt-desc">서울외국환중개(SMB)가 전날 은행간 시장의 거래량 가중평균으로 산출해 고시하는 &#x27;기준&#x27; 환율. 다른 모든 고시환율(현찰/전신환) 산정의 출발점이 된다.</td>
-          <td class="fxt-use">해외 공급처 견적 비교나 예산 편성 시 가장 먼저 참고하는 기준값. 다만 실제 결제 환율은 아니므로, 발주를 확정하기 전에는 반드시 전신환매도율로 다시 확인해야 한다.</td>
+          <td class="fxt-desc">환율 계산의 기준이 되는 &#x27;중심 환율&#x27;입니다. 서울외국환중개(SMB)가 전날 은행간 거래를 평균 내 매일 고시합니다.</td>
+          <td class="fxt-use">원가 환산이나 예산을 잡을 때 가장 먼저 참고하는 기준값(회계 기준)입니다. 다만 실제 결제 환율은 아니므로, 발주를 확정하기 전에는 반드시 전신환매도율로 다시 확인해야 합니다.</td>
         </tr>
 
         <tr>
           <td class="fxt-name">② 전신환매도율(T/T Selling)<span class="fxt-en">Telegraphic Transfer Selling Rate</span></td>
-          <td class="fxt-desc">은행이 해외로 송금(전신환)해 줄 때 적용하는 환율. 수입대금 송금, 해외 공급처에 대금을 &#x27;전신환&#x27;으로 지급할 때 구매담당자가 실제로 부담하는 환율이다.</td>
-          <td class="fxt-use">해외 공급처에 수입대금을 송금할 때 실제로 적용되는 환율로, 구매 원가에 가장 직접적인 영향을 준다. 견적서·계약서의 환율이 매매기준율로 적혀 있어도, 원가 계산과 발주 확정은 전신환매도율 기준으로 해야 오차가 없다.</td>
+          <td class="fxt-desc">은행이 고객에게 해외 송금용 외화를 &#x27;팔 때&#x27; 적용하는 환율입니다.</td>
+          <td class="fxt-use">해외 공급처에 수입대금을 송금할 때 실제로 적용되는 환율로, 구매 원가에 가장 직접적인 영향을 줍니다. 견적서·계약서의 환율이 매매기준율로 적혀 있어도, 원가 계산과 발주 확정은 이 환율 기준으로 해야 오차가 없습니다.</td>
         </tr>
 
         <tr>
           <td class="fxt-name">③ 전신환매입율(T/T Buying)<span class="fxt-en">Telegraphic Transfer Buying Rate</span></td>
-          <td class="fxt-desc">해외에서 전신환으로 원화를 받을 때(수출대금 입금 등) 적용하는 환율. 구매 업무에서는 환급/리베이트를 외화로 수취해 원화 전환할 때 참고한다.</td>
-          <td class="fxt-use">해외 공급업체로부터 클레임 환급금·리베이트·반품대금 등을 외화로 돌려받아 원화로 환산할 때 적용되는 환율. 실수령액(원화 기준)을 계산할 때 이 환율을 기준으로 삼아야 한다.</td>
+          <td class="fxt-desc">은행이 고객의 외화를 원화로 &#x27;살 때&#x27; 적용하는 환율입니다.</td>
+          <td class="fxt-use">수출대금이나 클레임 환급금·리베이트 등 외화를 원화로 바꿀 때 적용됩니다. 실수령액(원화 기준)을 계산할 때 이 환율을 기준으로 삼아야 합니다.</td>
         </tr>
 
         <tr>
           <td class="fxt-name">④ 현찰매도율(Cash Selling)<span class="fxt-en">Cash Selling Rate</span></td>
-          <td class="fxt-desc">은행이 원화를 받고 외화 &#x27;현찰&#x27;을 내줄 때 적용하는 환율. 해외 출장 경비 환전 등에 쓰이며, 운송·보관 비용이 포함되어 전신환보다 환전 시 적용 환율이 불리하다.</td>
-          <td class="fxt-use">해외 출장 경비를 현찰로 환전할 때 적용된다. 환전에 따른 비용 부담이 가장 크므로, 공급업체 대금 결제처럼 금액이 큰 거래는 현찰이 아닌 전신환 방식으로 처리하는 것이 원가 절감에 유리하다.</td>
+          <td class="fxt-desc">은행이 원화를 받고 외화 &#x27;현찰&#x27;을 팔 때 적용하는 환율입니다.</td>
+          <td class="fxt-use">해외 출장 경비 등 외화 현찰을 살 때 적용되며, 운송·보관 비용이 포함돼 전신환보다 불리한 환율입니다. 금액이 큰 거래는 현찰이 아닌 전신환 방식이 원가 절감에 유리합니다.</td>
         </tr>
 
         <tr>
           <td class="fxt-name">⑤ 현찰매입율(Cash Buying)<span class="fxt-en">Cash Buying Rate</span></td>
-          <td class="fxt-desc">은행이 외화 현찰을 받고 원화를 내줄 때 적용하는 환율. 해외 출장 후 잔액 재환전 등에 쓰인다.</td>
-          <td class="fxt-use">출장 후 남은 외화 현찰을 원화로 재환전할 때 적용된다. 재환전 시 환전 비용에 따른 손실이 있으므로, 잔액이 크다면 바로 재환전하기보다 다음 출장 경비로 이월하는 방안도 검토할 만하다.</td>
+          <td class="fxt-desc">은행이 외화 현찰을 사서 원화로 내줄 때 적용하는 환율입니다.</td>
+          <td class="fxt-use">출장 후 남은 외화 현찰을 원화로 되바꿀 때 적용됩니다. 재환전 시 손실이 있으므로, 잔액이 크다면 다음 출장 경비로 이월하는 방안도 검토할 만합니다.</td>
         </tr>
         </tbody>
       </table>
@@ -495,7 +448,7 @@
   </section>
 
   <footer>
-    출처: 상단 요약 카드(USD/CNY·USD/JPY·WTI 유가) — Investing.com 실시간 시세, 2026-09-11 조회 기준(자동 갱신되지 않는 스냅샷). 히스토리 그래프 — FRED(Federal Reserve Economic Data, 세인트루이스 연방준비은행) EXCHUS(위안화)·EXJPUS(엔화) 월평균 환율 시리즈 실측치(fred.stlouisfed.org, 2024.01~2026.08 전 구간 실측치, 추정치 없음), FRED WTISPLC(WTI 현물유가) 월평균 시리즈 실측치(fred.stlouisfed.org/series/WTISPLC, 2023.01~2026.08 전 구간 실측치, 추정치 없음). CPI — 통계청·대한민국 정책브리핑 소비자물가동향 보도자료. 환율 5종류 예시 — 우리은행 고시환율(kgosu.com 보도 인용). 그래프별 전망은 보고서 작성 시점 기준 참고용 의견이며 실제 시장 상황에 따라 달라질 수 있습니다. 실제 결제/회계 처리 시에는 반드시 은행 고시환율 원본을 재확인하시기 바랍니다.
+    그래프별 전망은 보고서 작성 시점 기준 참고용 의견이며 실제 시장 상황에 따라 달라질 수 있습니다. 실제 결제/회계 처리 시에는 반드시 은행 고시환율 원본을 재확인하시기 바랍니다.
   </footer>
 </div>
 
@@ -609,6 +562,24 @@
       return { x, y, below, label, lx, tw };
     });
 
+    // 1-1단계: x가 가까운 두 지점이 값 차이가 커서 위/아래로 방향이 갈린 경우(레벨 스택과는
+    // 다른 경우), 라벨 폭이 넓으면 여전히 거의 같은 x축 위에 위아래로만 떨어져 있어 "같은 축"에
+    // 쌓인 것처럼 보인다. 같은 방향끼리는 이미 레벨(단)로 세로 분리되어 문제가 없으므로,
+    // 방향이 서로 다른 인접 쌍에 한해서만 뒤 라벨을 오른쪽으로 옮긴다. 캔버스 오른쪽 끝만
+    // 넘지 않게 막고, 그 다음 라벨(예: ③④)과 겹치는지는 여기서 미리 막지 않는다 — 겹치면
+    // 3단계의 일반 상자-겹침 검사가 그 라벨의 레벨(높이)을 살짝 올려 자동으로 피해가므로,
+    // 여기서 과하게 제한하면 오히려 옆으로 거의 이동을 못 하게 되는 문제가 있었다.
+    const NUDGE_PX = 80;
+    for(let i1=1; i1<items.length; i1++){
+      const prev = items[i1-1], cur = items[i1];
+      if(prev.below === cur.below) continue;
+      if(cur.lx - prev.lx < NUDGE_PX){
+        const hiBound = w - cur.tw/2 - 6;
+        const target = Math.min(hiBound, prev.lx + NUDGE_PX);
+        if(target > cur.lx) cur.lx = target;
+      }
+    }
+
     // 2단계: 같은 방향(위/아래)의 라벨끼리, 이미 배치된 라벨과 가로로 겹치지 않는
     // 가장 낮은 단(level)을 찾아 배치한다 (가까운 변곡점이 여러 개 몰려도 서로 겹치지 않도록 전수 비교)
     // — 이건 어디까지나 초기 추정치일 뿐이다. 인접한 두 지점의 값 차이가 크면, 서로 다른
@@ -636,8 +607,12 @@
     // 구간 안에서 선이 오르내리는 전체 폭을 다 커버해야 해서 레벨이 끝없이 올라가며 라벨이
     // 차트 바깥까지 밀려날 수 있다. 화살표가 실제로 가리키는 지점 주변(로컬 구간)만
     // 검사해 "라벨 텍스트 바로 아래/위로 선이 지나가는" 핵심 문제만 잡는다.
-    const LINE_CHECK_RADIUS = 60;
-    const MAX_LINE_LEVEL = 4; // 로컬 검사만 해도 여전히 겹치면(가파른 구간) 여기서 포기하고 차트 밖으로 밀려나지 않게 한다
+    const LINE_CHECK_RADIUS = 32;
+    const MAX_LINE_LEVEL = 2; // 로컬 검사만 해도 여전히 겹치면(가파른 구간) 여기서 포기하고 차트 밖으로 밀려나지 않게 한다.
+    // (라디우스/레벨 상한을 너무 크게 잡으면, 두 변곡점이 가깝고 값 차이가 큰 급등락 구간에서
+    // 라벨이 자기 지점에서 아주 멀리(반대쪽 변곡점 근처까지) 밀려나 서로 자리가 뒤바뀐 것처럼
+    // 보이는 문제가 있었다 — 라벨 뒤에는 배경 패널이 깔리므로(4단계) 선과 살짝 겹쳐도 텍스트
+    // 가독성에는 지장이 없어, 상한을 낮춰 라벨이 최대한 자기 지점 가까이 머물게 한다.
 
     // 3단계: 실제 라벨 상자의 화면 좌표(사각형)를 계산해 같은 방향끼리 겹치거나 실제 선과
     // 겹치면 레벨을 올리고 다시 계산 — 값 차이 때문에 위 추정이 틀린 경우를 실측 기반으로
@@ -682,7 +657,20 @@
       const d = dist(level);
       const labelY = below ? y + d : y - d;
       ctx.strokeStyle = color; ctx.lineWidth = 1;
-      ctx.beginPath(); ctx.moveTo(x, y + (below?3:-3)); ctx.lineTo(x, labelY + (below?-9:9)); ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(x, y + (below?3:-3));
+      if(Math.abs(lx - x) > 1){
+        // 라벨이 옆으로 밀려난 경우, 지점에서 라벨 높이까지 수직으로 올라간/내려간 뒤 옆으로
+        // 꺾어 라벨 앞까지 이어지는 꺾은선으로 그린다(라벨 중심이 지점의 x와 달라도 어느
+        // 라벨인지 헷갈리지 않게).
+        const approach = tw/2 + 6;
+        const endX = lx > x ? lx - approach : lx + approach;
+        ctx.lineTo(x, labelY);
+        ctx.lineTo(endX, labelY);
+      } else {
+        ctx.lineTo(x, labelY + (below?-9:9));
+      }
+      ctx.stroke();
       ctx.beginPath(); ctx.fillStyle = color; ctx.arc(x, y, 3, 0, Math.PI*2); ctx.fill();
       ctx.lineWidth = 1.2; ctx.strokeStyle = surface; ctx.stroke();
 
