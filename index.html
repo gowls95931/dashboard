@@ -1,0 +1,1017 @@
+<title>구매팀 원자재·환율 대시보드</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+  :root{
+    --bg:#eef2f5; --surface:#ffffff; --surface-2:#f4f7f9; --border:#dbe3e9;
+    --ink:#16222c; --ink-2:#3c4a56; --muted:#6b7a86;
+    --cny:#2b6cb0; --jpy:#c2410c; --wti:#0f766e; --cpi:#7c3aed; --cpi2:#c2410c;
+    --up:#b3261e; --down:#0f766e;
+    --shadow: 0 1px 2px rgba(20,30,40,.06), 0 8px 24px -12px rgba(20,30,40,.12);
+  }
+  :root:not([data-theme="light"]){
+    @media (prefers-color-scheme: dark){
+      --bg:#12181e; --surface:#1a2129; --surface-2:#212a33; --border:#2c3742;
+      --ink:#eef2f5; --ink-2:#c3ccd4; --muted:#8894a0;
+      --cny:#6ea8e8; --jpy:#e8934f; --wti:#4fc3b6; --cpi:#b596f0; --cpi2:#e8934f;
+      --up:#f2867e; --down:#4fc3b6;
+      --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px -12px rgba(0,0,0,.5);
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#12181e; --surface:#1a2129; --surface-2:#212a33; --border:#2c3742;
+    --ink:#eef2f5; --ink-2:#c3ccd4; --muted:#8894a0;
+    --cny:#6ea8e8; --jpy:#e8934f; --wti:#4fc3b6; --cpi:#b596f0; --cpi2:#e8934f;
+    --up:#f2867e; --down:#4fc3b6;
+    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px -12px rgba(0,0,0,.5);
+  }
+  *{box-sizing:border-box;}
+  body{
+    background:var(--bg); color:var(--ink);
+    font-family:"IBM Plex Sans KR","IBM Plex Sans",-apple-system,sans-serif;
+    padding:0 20px 64px; margin:0;
+  }
+  .wrap{ max-width:1180px; margin:0 auto; }
+  .num{ font-family:"IBM Plex Mono",monospace; font-variant-numeric:tabular-nums; }
+
+  header.top{ padding:28px 0 20px; display:flex; justify-content:space-between; align-items:flex-end; gap:16px; flex-wrap:wrap; border-bottom:1px solid var(--border); margin-bottom:24px;}
+  header.top h1{ font-size:1.5rem; font-weight:700; margin:0 0 6px; letter-spacing:-.01em; text-wrap:balance;}
+  header.top .sub{ color:var(--muted); font-size:.86rem; }
+  header.top .meta{ text-align:right; color:var(--muted); font-size:.78rem; line-height:1.6; }
+  .badge{ display:inline-block; background:var(--surface-2); border:1px solid var(--border); color:var(--ink-2); font-size:.72rem; padding:3px 9px; border-radius:99px; margin-right:6px;}
+
+  .tiles{ display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:28px;}
+  @media (max-width:820px){ .tiles{grid-template-columns:repeat(2,1fr);} }
+  .tile{ background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:16px 18px; box-shadow:var(--shadow);}
+  .tile .lbl{ font-size:.74rem; color:var(--muted); display:flex; align-items:center; gap:6px; margin-bottom:8px;}
+  .dot{ width:8px; height:8px; border-radius:50%; display:inline-block;}
+  .tile .val{ font-size:1.5rem; font-weight:600; }
+  .tile .unit{ font-size:.85rem; color:var(--muted); font-weight:500; margin-left:2px;}
+  .tile .chg{ font-size:.78rem; margin-top:6px; }
+  .chg.up{ color:var(--up); } .chg.down{ color:var(--down); }
+  .tile .period{ font-size:.7rem; color:var(--muted); margin-top:2px;}
+
+  section{ margin-bottom:34px; }
+  .sec-head{ display:flex; align-items:baseline; justify-content:space-between; margin-bottom:12px; flex-wrap:wrap; gap:8px;}
+  .sec-head h2{ font-size:1.05rem; font-weight:700; margin:0; }
+  .sec-head .note{ font-size:.76rem; color:var(--muted); }
+
+  .grid2{ display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  @media (max-width:900px){ .grid2{ grid-template-columns:1fr; } }
+
+  .grid3{ display:grid; grid-template-columns:repeat(3,1fr); gap:16px; }
+  @media (max-width:1000px){ .grid3{ grid-template-columns:1fr 1fr; } }
+  @media (max-width:640px){ .grid3{ grid-template-columns:1fr; } }
+
+  .grid4{ display:grid; grid-template-columns:repeat(4,1fr); gap:14px; }
+  @media (max-width:1100px){ .grid4{ grid-template-columns:1fr 1fr; } }
+  @media (max-width:560px){ .grid4{ grid-template-columns:1fr; } }
+
+  .card{ background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:18px 20px 12px; box-shadow:var(--shadow);}
+  .card h3{ font-size:.88rem; font-weight:600; margin:0 0 2px; }
+  .card .cap{ font-size:.74rem; color:var(--muted); margin-bottom:10px;}
+  .chart-box{ position:relative; height:230px; }
+  .chart-box.tall{ height:280px; }
+  .chart-box.wide{ height:280px; }
+  .chart-scroll{ overflow-x:auto; }
+  @media (max-width:900px){ .chart-scroll .chart-box.wide{ min-width:900px; } }
+  .grid3 .chart-box{ height:210px; }
+  .chart-box canvas{ position:absolute; inset:0; width:100%; height:100%; display:block; }
+  .chart-note{ font-size:.72rem; color:var(--muted); line-height:1.55; margin-top:8px; padding-top:8px; border-top:1px dashed var(--border); }
+  .driver-list{ font-size:.72rem; color:var(--ink-2); line-height:1.55; margin-top:10px; padding-top:10px; border-top:1px solid var(--border); }
+  .driver-list .dl-title{ font-weight:700; font-size:.72rem; color:var(--ink); margin-bottom:5px; letter-spacing:.01em; }
+  .driver-list ul{ margin:0; padding-left:1.15em; }
+  .driver-list li{ margin-bottom:4px; }
+  .driver-list li b{ color:var(--ink); }
+  .chart-tip{ position:absolute; pointer-events:none; opacity:0; transform:translate(-50%,0); background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:6px 10px; font-size:.76rem; line-height:1.5; color:var(--ink); box-shadow:var(--shadow); white-space:nowrap; transition:opacity .1s ease; z-index:2;}
+  .chart-tip b{ font-weight:600; }
+
+  .acc-item{ border-bottom:1px solid var(--border); }
+  .acc-item:first-child{ border-top:1px solid var(--border); }
+  .acc-head{ width:100%; text-align:left; background:none; border:none; cursor:pointer; padding:13px 4px; display:flex; justify-content:space-between; align-items:center; font-size:.86rem; font-weight:600; color:var(--ink); font-family:inherit; }
+  .acc-head .chev{ color:var(--muted); transition:transform .18s ease; flex:none; }
+  .acc-item.open .acc-head .chev{ transform:rotate(180deg); }
+  .acc-body{ max-height:0; overflow:hidden; transition:max-height .22s ease; }
+  .acc-item.open .acc-body{ max-height:400px; }
+  .acc-body p{ margin:0 0 14px; font-size:.86rem; line-height:1.65; color:var(--ink-2); }
+
+  table.fxt{ width:100%; border-collapse:collapse; font-size:.84rem; }
+  table.fxt th{ text-align:left; font-size:.72rem; text-transform:uppercase; letter-spacing:.03em; color:var(--muted); font-weight:600; padding:8px 10px; border-bottom:1px solid var(--border); }
+  table.fxt td{ padding:12px 10px; border-bottom:1px solid var(--border); vertical-align:top; }
+  .fxt-name{ font-weight:600; white-space:nowrap; }
+  .fxt-en{ display:block; font-size:.68rem; color:var(--muted); font-weight:500; }
+  .fxt-desc{ color:var(--ink-2); line-height:1.6; }
+  .fxt-use{ color:var(--ink); line-height:1.6; }
+  .fxt-note{ font-size:.78rem; color:var(--ink-2); background:var(--surface-2); border-radius:10px; padding:12px 14px; margin-top:12px; line-height:1.6;}
+
+  .legend{ display:flex; gap:14px; flex-wrap:wrap; font-size:.76rem; color:var(--ink-2); margin-top:4px;}
+  .legend span{ display:inline-flex; align-items:center; gap:5px;}
+  .legend i{ width:10px; height:10px; border-radius:2px; display:inline-block;}
+
+  footer{ margin-top:36px; padding-top:16px; border-top:1px solid var(--border); font-size:.74rem; color:var(--muted); line-height:1.7;}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div>
+      <h1>구매(자재)팀 · 원자재·환율 주간 대시보드</h1>
+      <div class="sub">1주차 시황 리포트 &mdash; USD/CNY · USD/JPY · WTI 유가 · 한국 소비자물가지수(CPI)</div>
+    </div>
+    <div class="meta">
+      <div><span class="badge">데이터 기준 2026-09-11 (실시간 시세 조회 기준)</span></div>
+      <div>환율·유가 실시간 시세 · CPI 월별 지수·상승률</div>
+    </div>
+  </header>
+
+  <div class="tiles">
+    <div class="tile">
+      <div class="lbl"><i class="dot" style="background:var(--cny)"></i>USD/CNY</div>
+      <div class="val num">6.7078</div>
+      <div class="chg num " id="cny-chg">전일대비 +0.00%</div>
+      <div class="period">2026-09-11 실시간 시세</div>
+    </div>
+    <div class="tile">
+      <div class="lbl"><i class="dot" style="background:var(--jpy)"></i>USD/JPY</div>
+      <div class="val num">153.54</div>
+      <div class="chg num up" id="jpy-chg">전일대비 +0.02%</div>
+      <div class="period">2026-09-11 실시간 시세</div>
+    </div>
+    <div class="tile">
+      <div class="lbl"><i class="dot" style="background:var(--wti)"></i>WTI 유가</div>
+      <div class="val num">$95.43</div>
+      <div class="chg num down" id="wti-chg">전일대비 -0.65%</div>
+      <div class="period">2026-09-11 실시간 시세</div>
+    </div>
+    <div class="tile">
+      <div class="lbl"><i class="dot" style="background:var(--cpi)"></i>한국 CPI 상승률</div>
+      <div class="val num">2.3%</div>
+      <div class="chg num" id="cpi-chg">전월대비 -0.1%p</div>
+      <div class="period">2025-12 전년동월대비</div>
+    </div>
+  </div>
+  <div class="fxt-note" style="margin-top:2px; margin-bottom:24px;">위 4개 요약 카드 중 USD/CNY·USD/JPY·WTI 유가는 <b>실시간 시세</b>(Investing.com, 2026-09-11 조회 기준)이며, 아래 ①번 히스토리 그래프는 FRED 월평균 통계(2026년 8월까지)로 기준 시점이 서로 다릅니다. 이 페이지는 자동으로 매일 갱신되지 않으며, 조회 시점의 스냅샷입니다.</div>
+
+  <section>
+    <div class="sec-head">
+      <h2>1. 환율&middot;유가&middot;물가 그래프</h2>
+      <div class="note">월평균/연간 기준 · 마우스오버 시 수치 확인</div>
+    </div>
+    <div class="grid3">
+      <div class="card">
+        <h3>USD/CNY 환율</h3>
+        <div class="cap">2024.01 &ndash; 2026.08, 월평균 (위안/달러)</div>
+        <div class="chart-box"><canvas id="chartCNY"></canvas></div>
+        <div class="driver-list"><div class="dl-title">주요 변동요인</div><ul><li><b>①</b> Fed 빅컷+경기부양(2024.09): 미 연준의 &#x27;빅컷&#x27;(50bp 인하)과 중국의 대규모 경기부양책이 겹치며 위안화가 강세로 전환 (7.08)</li>
+<li><b>②</b> 관세우려+금리차 확대(2025.01): 트럼프 행정부의 대중 관세 정책 우려와 미중 금리차가 다시 부각되며 위안화 약세 압력 (7.30 부근)</li>
+<li><b>③</b> 20개월 최고, PBOC 개입(2026.08): 달러 약세·무역흑자로 위안화가 20개월간 약 9% 절상, 3년반 만의 강세 수준에 도달하자 당국이 절상 속도 조절에 나섬 (6.74)</li></ul></div>
+        <div class="chart-note"><b>전망</b>: 6.6~6.8위안 박스권에서 완만한 위안화 강세 기조가 이어질 가능성이 높아 보입니다.  <br><b>근거</b>: 연준의 점진적 금리인하 사이클에 따른 달러 약세, 중국의 경상수지 흑자 확대, 최근 안정화된 미중 통상관계.</div>
+      </div>
+      <div class="card">
+        <h3>USD/JPY 환율</h3>
+        <div class="cap">2024.01 &ndash; 2026.08, 월평균 (엔/달러)</div>
+        <div class="chart-box"><canvas id="chartJPY"></canvas></div>
+        <div class="driver-list"><div class="dl-title">주요 변동요인</div><ul><li><b>①</b> 160엔 돌파→정부개입(2024.07): 엔화가 달러당 160엔을 넘어서자 일본 정부가 외환시장에 직접 개입(7/11~12 약 5.5조엔 규모 엔화 매수)</li>
+<li><b>②</b> BOJ긴축+Fed인하기대→강세(2024.09): BOJ 금리인상과 Fed 빅컷 기대가 겹치며 엔 캐리트레이드 청산, 엔화가 140엔대까지 강세</li>
+<li><b>③</b> 164엔 근접, 개입 임박(2026.07): 미일 금리차 확대로 엔화가 다시 약세, 164엔 부근까지 밀리며 개입 경계감 고조</li>
+<li><b>④</b> 공동개입 후 재차 약세(2026.08): 미·일 15년 만의 공동개입으로 155.20엔까지 강세 전환했으나 효과가 오래가지 못하고 158엔대로 되돌림</li></ul></div>
+        <div class="chart-note"><b>전망</b>: 155~163엔 사이의 높은 변동성이 당분간 지속되고, 쏠림이 심해지면 추가적인 정부·중앙은행 개입 가능성도 배제할 수 없습니다.  <br><b>근거</b>: 사상 최대 수준의 미일 금리차에 따른 엔 캐리트레이드 압력, 8월 공동개입 이후에도 다시 약세로 돌아선 이력.</div>
+      </div>
+      <div class="card">
+        <h3>한국 CPI 지수 + 전년동월대비</h3>
+        <div class="cap">2020.01 &ndash; 2025.12, 월별 (지수 실선 · 상승률 점선)</div>
+        <div class="legend">
+          <span><i style="background:var(--cpi)"></i>CPI 지수(좌축, 2020=100)</span>
+          <span><i style="background:var(--cpi2)"></i>전년동월대비(우축, %)</span>
+        </div>
+        <div class="chart-box"><canvas id="chartCPI"></canvas></div>
+        <div class="driver-list"><div class="dl-title">주요 변동요인</div><ul><li><b>①</b> 코로나 디플레이션 저점(2020.05): 팬데믹發 수요 위축과 국제유가 급락이 겹치며 전년동월대비 -0.2%까지 하락</li>
+<li><b>②</b> 전쟁발 물가충격 정점(2022.07): 러-우크라 전쟁으로 에너지·곡물가가 급등하며 전년동월대비 +6.3%로 정점</li>
+<li><b>③</b> 정점 이후 최저 상승률(2024.10): 국제유가 안정과 기저효과가 겹치며 상승률이 +1.3%까지 둔화</li></ul></div>
+        <div class="chart-note"><b>전망</b>: 2025년 12월(전년동월대비 +2.3%) 수준인 2%대 초중반의 상승률이 2026년에도 당분간 이어질 것으로 예상됩니다.  <br><b>근거</b>: 정부의 공공요금 안정화 기조와 기저효과. 다만 유가·환율 변동성이 확대되면 상방 리스크로 작용할 수 있습니다.</div>
+      </div>
+    </div>
+    <div class="card" style="margin-top:16px;">
+      <h3>WTI 원유 가격</h3>
+      <div class="cap">2023.01 &ndash; 2026.08, 월평균 (USD/배럴) &middot; 주요 변곡점 7개 표시</div>
+      <div class="chart-scroll"><div class="chart-box wide"><canvas id="chartWTI"></canvas></div></div>
+      <div class="driver-list"><div class="dl-title">주요 변동요인</div><ul><li><b>①</b> OPEC+ 감산 확대→고점(2023.09): 사우디·러시아의 자발적 감산 연장·확대로 공급 축소 우려가 커지며 89달러로 연중 고점</li>
+<li><b>②</b> 후티 공격→고점(2024.04): 홍해 유조선 공격에 이란-이스라엘 직접 공습까지 겹치며 중동 확전 우려로 85달러 부근까지 급등</li>
+<li><b>③</b> 중국 수요둔화→하락(2024.09): 중국 원유수요 전망 하향과 미국 재고 증가가 겹치며 70달러 초반까지 가파르게 하락</li>
+<li><b>④</b> 관세+증산→급락(2025.04): 美 상호관세 발표發 경기침체 우려와 OPEC+의 예상 밖 5월 증산 결정이 겹치며 급락(장중 한때 55달러 수준)</li>
+<li><b>⑤</b> 4년 만의 최저(2025.12): OPEC+ 증산 기조 지속에 따른 공급과잉이 이어지며 58달러까지 하락</li>
+<li><b>⑥</b> 중동전쟁 고점(2026.05): 美·이란 군사적 충돌이 본격화되며 중동發 공급 차질 우려가 급부상, 102달러까지 급등</li>
+<li><b>⑦</b> 공급완화, 재상승(2026.08): 美 원유재고 감소와 중동 정세 재악화 조짐이 겹치며 83달러대로 재차 반등</li></ul></div>
+      <div class="chart-note"><b>전망</b>: 호르무즈 해협 리스크가 진정되지 않을 경우 단기적으로 85~100달러권까지 추가 상승할 가능성이 있습니다.  <br><b>근거</b>: 9월 들어 재점화된 미·이란 군사적 긴장, 호르무즈 해협을 지나는 전 세계 원유 해상수송량 비중(약 20%).</div>
+    </div>
+    <div class="fxt-note" style="margin-top:14px;">FRED(Federal Reserve Economic Data) WTISPLC(WTI 현물유가) 월평균 시리즈 실측치입니다 (2023.01~2026.08 전 구간).</div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <h2>주요 변동 요인 (기간별 분석)</h2>
+      <div class="note">항목을 클릭하면 펼쳐집니다</div>
+    </div>
+    <div class="grid3">
+      <div class="card">
+        <h3 style="color:var(--cny)">USD/CNY</h3>
+        
+      <div class="acc-item">
+        <button class="acc-head" data-target="cny0">
+          <span>2024년 상반기 — 위안화 약세</span>
+          <svg class="chev" width="16" height="16" viewBox="0 0 16 16"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <div class="acc-body" id="cny0"><p>USD/CNY는 7.17→7.25로 완만히 상승(위안화 약세)했다. 주요 요인은 ①미중 금리차 확대 ②중국 경기 부진 ③부동산 시장 침체 ④전반적인 달러 강세 ⑤인민은행(PBOC)의 완화적 통화정책 기조, 다섯 가지로 요약된다. 2025년 초까지도 금리차와 미국의 관세 우려가 위안화 약세 요인으로 지목됐고, 당시 시장에서는 위안화가 달러당 7.3 수준까지 추가 약세를 보일 가능성이 거론됐다. → 중국산 원부자재 수입원가에는 상승 압박 요인.</p></div>
+      </div>
+
+      <div class="acc-item">
+        <button class="acc-head" data-target="cny1">
+          <span>2024년 하반기 — 위안화 강세 전환 (변곡점: 2024.09)</span>
+          <svg class="chev" width="16" height="16" viewBox="0 0 16 16"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <div class="acc-body" id="cny1"><p>2024년 9월은 중요한 변곡점이다. 미 연준의 &#x27;빅컷&#x27;(50bp 금리인하)과 중국 정부의 대규모 경기부양책 발표가 동시에 나오면서 위안화가 강세로 돌아섰다(USD/CNY 7.26→7.08). 로이터(Reuters)는 중국의 대규모 경기부양책과 미 연준의 금리인하 기대가 위안화 상승을 뒷받침했다고 분석했다. → 중국산 수입원가 완화 국면으로 전환.</p></div>
+      </div>
+
+      <div class="acc-item">
+        <button class="acc-head" data-target="cny2">
+          <span>2025년 — 다시 관세·금리차 이슈</span>
+          <svg class="chev" width="16" height="16" viewBox="0 0 16 16"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <div class="acc-body" id="cny2"><p>2025년 초에는 트럼프 행정부의 대중국 관세 정책 우려가 다시 위안화 약세 압력으로 작용했다(USD/CNY 7.30 부근까지 상승). 당시 시장에서는 중국이 급격한 평가절하보다는 점진적인 위안화 약세를 용인할 가능성이 높다고 봤고, 인민은행(PBOC)은 급격한 통화가치 하락을 막기 위한 여러 안정화 조치를 준비한 것으로 전해졌다. → 관세 우려가 이어지는 동안 중국산 수입원가의 상방 리스크 요인으로 작용.</p></div>
+      </div>
+
+      <div class="acc-item">
+        <button class="acc-head" data-target="cny3">
+          <span>2026년 — 위안화 강세</span>
+          <svg class="chev" width="16" height="16" viewBox="0 0 16 16"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <div class="acc-body" id="cny3"><p>2026년 들어서는 흐름이 크게 달라졌다. FRED 월평균 기준 USD/CNY는 2025년 11월 7.1069에서 2026년 8월 6.7361까지 꾸준히 하락(위안화 강세)했다. 2026년 8월 말 로이터는 위안화가 약 20개월 동안 거의 9% 절상되며 달러 대비 3년 반 만의 강세 수준에 도달했다고 보도했고, 동시에 중국 당국이 추가적인 위안화 절상 속도를 조절하기 위해 시장에 개입하고 있다고 전했다. 주요 요인은 ①달러 약세 ②중국의 대규모 무역흑자 ③수출 호조 ④위안화 강세 기대 심리 ⑤PBOC의 환율 관리로 정리된다. 2026년 8월 중국의 외환보유액 증가 역시 달러 약세·위안화 강세가 함께 나타난 배경을 뒷받침한다. → 중국산 원부자재·완제품의 원화 환산 원가 경쟁력이 높아지는 국면.</p></div>
+      </div>
+      </div>
+      <div class="card">
+        <h3 style="color:var(--jpy)">USD/JPY</h3>
+        
+      <div class="acc-item">
+        <button class="acc-head" data-target="jpy0">
+          <span>2024년 상반기 — 엔화 약세</span>
+          <svg class="chev" width="16" height="16" viewBox="0 0 16 16"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <div class="acc-body" id="jpy0"><p>Fed의 고금리 장기화와 BOJ의 초완화적 정책 기조가 맞물리며 미일 금리차가 사상 최대 수준으로 벌어졌고, 그 결과 엔화가 큰 폭으로 약세를 보였다(USD/JPY 146→158). 2024년 7월에는 엔화가 달러당 160엔을 넘어섰고, 일본 정부가 직접 외환시장에 개입했다. 일본 재무성 자료에 따르면 7월11일 약 3.17조엔, 7월12일 약 2.37조엔 규모의 엔화 매수 개입을 단행했고, 이 개입으로 엔화는 161.76엔에서 157.30엔까지 강세로 돌아섰다. → 일본向 수입 결제 원가에 상승 압박.</p></div>
+      </div>
+
+      <div class="acc-item">
+        <button class="acc-head" data-target="jpy1">
+          <span>2024년 7~9월 — 엔화 급강세</span>
+          <svg class="chev" width="16" height="16" viewBox="0 0 16 16"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <div class="acc-body" id="jpy1"><p>BOJ의 금리인상과 Fed의 금리인하 기대가 겹치며 미일 금리차가 축소되기 시작했다. 2024년 7월 BOJ가 기준금리를 인상하면서 일본 금리가 높아졌고, 동시에 미국의 금리인하 기대가 커지자 로이터는 이것이 엔화 강세와 &#x27;엔 캐리트레이드 청산&#x27;을 촉진했다고 분석했다. 8월5일에는 이 청산 움직임이 글로벌 증시 급락으로 이어지는 쇼크가 발생했고, 9월에는 미국의 50bp(빅컷) 금리인하 기대가 커지면서 엔화가 달러당 140엔대까지 강세를 보였다(USD/JPY 158→143). → 일본向 수입 결제 원가는 단기적으로 완화됐으나, 변동성 자체가 크게 확대된 구간.</p></div>
+      </div>
+
+      <div class="acc-item">
+        <button class="acc-head" data-target="jpy2">
+          <span>2025년 — 다시 금리정책과 관세</span>
+          <svg class="chev" width="16" height="16" viewBox="0 0 16 16"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <div class="acc-body" id="jpy2"><p>2025년에는 미국의 관세정책이 시장 변동성을 크게 키웠다. 4월에는 관세정책에 따른 경기침체 우려로 달러가 약세를 보이며 USD/JPY도 141엔대까지 하락했다. 연말에는 BOJ의 추가 금리인상 기대가 다시 커졌는데, 12월 BOJ 총재의 발언 이후 시장이 금리인상 가능성을 크게 반영하면서 엔화가 재차 강세를 보였다. → 환율 방향이 여러 차례 바뀌며 일본向 결제 시점에 따른 환리스크 관리 필요성이 커진 해.</p></div>
+      </div>
+
+      <div class="acc-item">
+        <button class="acc-head" data-target="jpy3">
+          <span>2026년 — 가장 중요한 변곡점</span>
+          <svg class="chev" width="16" height="16" viewBox="0 0 16 16"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <div class="acc-body" id="jpy3"><p>2026년은 USD/JPY의 움직임이 가장 컸던 해다. FRED 월평균 기준으로 1월 156.65엔에서 7월 162.33엔까지 상승했고, 특히 7월말~8월초가 핵심 변곡점이었다. 엔화가 달러당 약 164엔까지 약세를 보인 뒤 미국과 일본이 15년 만에 공동으로 외환시장에 개입했고, 이 개입으로 엔화는 한때 155.20엔까지 강세로 돌아섰다. 다만 개입 효과는 오래가지 못했고, 이후 다시 159엔 안팎까지 약세로 되돌아갔다(8월 평균 158.85엔). → JPY 결제 원가의 변동성이 매우 커, 결제 시점 분산이나 선물환 등 환리스크 관리가 특히 중요한 구간.</p></div>
+      </div>
+      </div>
+      <div class="card">
+        <h3 style="color:var(--wti)">WTI 유가</h3>
+        
+      <div class="acc-item">
+        <button class="acc-head" data-target="wti0">
+          <span>2023년 1~3월 (1분기)</span>
+          <svg class="chev" width="16" height="16" viewBox="0 0 16 16"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <div class="acc-body" id="wti0"><p>연초 78달러 선에서 출발했으나, 3월 실리콘밸리은행(SVB) 파산 등 미 지역은행發 금융불안으로 경기침체 우려가 커지며 73달러 선까지 하락했다.</p></div>
+      </div>
+
+      <div class="acc-item">
+        <button class="acc-head" data-target="wti1">
+          <span>2023년 4~6월 (2분기)</span>
+          <svg class="chev" width="16" height="16" viewBox="0 0 16 16"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <div class="acc-body" id="wti1"><p>OPEC+가 4월 자발적 추가 감산을 전격 발표하며 79달러까지 반등했으나, 중국 리오프닝發 수요 회복 기대와 실제 회복 속도가 예상보다 더디다는 불확실성이 동시에 작용하며 6월 70달러 선까지 재차 하락했다.</p></div>
+      </div>
+
+      <div class="acc-item">
+        <button class="acc-head" data-target="wti2">
+          <span>2023년 7~9월 (3분기)</span>
+          <svg class="chev" width="16" height="16" viewBox="0 0 16 16"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <div class="acc-body" id="wti2"><p>사우디아라비아·러시아가 자발적 감산을 연장·확대하면서 공급 축소 우려로 9월 89달러까지 급등, 2023년 연중 최고치를 기록했다.</p></div>
+      </div>
+
+      <div class="acc-item">
+        <button class="acc-head" data-target="wti3">
+          <span>2023년 10~12월 (4분기)</span>
+          <svg class="chev" width="16" height="16" viewBox="0 0 16 16"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <div class="acc-body" id="wti3"><p>10월 이스라엘-하마스 전쟁 발발로 중동 리스크가 불거졌으나 실제 공급 차질로는 이어지지 않았고, 미국의 기록적 산유량 증가와 온화한 겨울 수요 전망이 겹치며 72달러까지 하락 마감했다(2023년 연평균 약 77.6달러).</p></div>
+      </div>
+
+      <div class="acc-item">
+        <button class="acc-head" data-target="wti4">
+          <span>2024년 1~4월 (상반기 초)</span>
+          <svg class="chev" width="16" height="16" viewBox="0 0 16 16"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <div class="acc-body" id="wti4"><p>연초 홍해에서 후티 반군이 유조선을 잇달아 공격하며 주요 항로의 공급망 리스크가 부각돼 상방 압력으로 작용했고, OPEC+ 감산 기조 유지 속 완만히 상승하던 중 4월 이란-이스라엘 간 직접 공습까지 발생하며 중동 확전 우려로 85달러 부근까지 급등했다.</p></div>
+      </div>
+
+      <div class="acc-item">
+        <button class="acc-head" data-target="wti5">
+          <span>2024년 5~9월 (상반기 말~3분기)</span>
+          <svg class="chev" width="16" height="16" viewBox="0 0 16 16"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <div class="acc-body" id="wti5"><p>확전 우려가 완화된 뒤로는 중국의 경기둔화에 따른 수요 부진이 하락을 주도했다. OPEC은 중국의 원유수요 증가 전망을 여러 차례 하향 조정했고, 실제 중국의 원유 수입도 약한 흐름을 나타내며 미국 원유재고 증가와 겹쳐 8~9월 70달러 초반까지 가파르게 하락했다.</p></div>
+      </div>
+
+      <div class="acc-item">
+        <button class="acc-head" data-target="wti6">
+          <span>2024년 10~12월 (4분기)</span>
+          <svg class="chev" width="16" height="16" viewBox="0 0 16 16"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <div class="acc-body" id="wti6"><p>OPEC+의 감산 완화(증산 전환) 우려와 11월 트럼프 당선 이후 &#x27;드릴, 베이비, 드릴&#x27;로 대표되는 증산 기대가 맞물리며 70달러 내외 약세로 한 해를 마감했다(2024년 연평균 약 76.6달러).</p></div>
+      </div>
+
+      <div class="acc-item">
+        <button class="acc-head" data-target="wti7">
+          <span>2025년 1~6월 (상반기)</span>
+          <svg class="chev" width="16" height="16" viewBox="0 0 16 16"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <div class="acc-body" id="wti7"><p>OPEC+가 시장점유율 회복을 위해 감산 기조를 접고 증산으로 전환했고, 미국·브라질·가이아나 등 비OPEC 산유국의 생산이 사상 최대치를 경신하며 공급과잉이 본격화, 월평균 기준 76달러(1월)에서 62달러(5월)까지 하락했다. 특히 4월2일 미국의 &#x27;상호관세&#x27; 발표 직후에는 관세發 경기침체 우려와 OPEC+의 예상 밖 5월 증산 결정이 겹치며 로이터에 따르면 WTI가 장중 한때 78달러에서 55달러 수준까지 급락하는 등 하루 단위 변동성이 매우 컸다.</p></div>
+      </div>
+
+      <div class="acc-item">
+        <button class="acc-head" data-target="wti8">
+          <span>2025년 7~12월 (하반기)</span>
+          <svg class="chev" width="16" height="16" viewBox="0 0 16 16"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <div class="acc-body" id="wti8"><p>7월에는 OPEC+가 8월 생산량을 시장 예상보다 큰 폭으로 늘리기로 결정하며 공급 부담이 재차 커졌다. 하루 약 200만 배럴에 달하는 공급과잉과 중국 수요 둔화가 지속되며 하락세가 이어졌고, 12월에는 4년 만에 최저 수준인 58달러까지 밀렸다(2025년 연간 하락률 약 20%, 2020년 이후 최대 낙폭).</p></div>
+      </div>
+
+      <div class="acc-item">
+        <button class="acc-head" data-target="wti9">
+          <span>2026년 1~2월</span>
+          <svg class="chev" width="16" height="16" viewBox="0 0 16 16"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <div class="acc-body" id="wti9"><p>공급과잉 우려가 절정에 달하며 60달러 내외의 연저점을 기록했다(1월 평균 60.0달러, 2월 평균 64.5달러).</p></div>
+      </div>
+
+      <div class="acc-item">
+        <button class="acc-head" data-target="wti10">
+          <span>2026년 3~5월</span>
+          <svg class="chev" width="16" height="16" viewBox="0 0 16 16"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <div class="acc-body" id="wti10"><p>미국-이란 군사적 충돌이 본격화되며 중동發 공급 차질 우려가 급부상해 변동성이 크게 확대됐다. 로이터는 2026년 초 이후 중동산 원유의 공급 차질과 재고 감소가 가격을 밀어 올린 핵심 배경이라고 분석했다. 월평균 기준으로 3월 91달러 → 4월 100달러 → 5월 102달러까지 급등하며 3개월 연속 90~100달러대의 높은 가격이 유지됐다.</p></div>
+      </div>
+
+      <div class="acc-item">
+        <button class="acc-head" data-target="wti11">
+          <span>2026년 6~7월</span>
+          <svg class="chev" width="16" height="16" viewBox="0 0 16 16"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <div class="acc-body" id="wti11"><p>군사적 긴장이 일시 완화되고 외교적 협상 기대가 형성된 가운데, 중국의 원유수요 둔화와 미국·캐나다·가이아나 등 비OPEC 산유국의 공급 증가가 상승폭을 제한하는 요인으로 겹치며 85달러(6월)→80달러(7월)로 급격히 되돌림이 나타났다.</p></div>
+      </div>
+
+      <div class="acc-item">
+        <button class="acc-head" data-target="wti12">
+          <span>2026년 8월</span>
+          <svg class="chev" width="16" height="16" viewBox="0 0 16 16"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <div class="acc-body" id="wti12"><p>월평균 83.9달러로 재차 오름세로 돌아섰다. 8월 중순 이후 미국 원유 재고 감소와 중동 정세 재악화 조짐이 겹치며 월말로 갈수록 상승폭이 확대됐다.</p></div>
+      </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head"><h2>2. 한국 소비자물가지수(CPI) 상세</h2><div class="note">구매 실무 관점 · 연도별 요인</div></div>
+    <div class="grid2">
+      <div class="card">
+        <h3>구매(자재) 관점에서 본 CPI</h3>
+        <div class="cap">CPI를 왜 봐야 하고, 어떻게 대응할지</div>
+        <div class="fxt-note" style="margin-top:2px;">CPI(소비자물가지수)는 원부자재비뿐 아니라 인건비·물류비 등 공급망 전반의 원가 상승 압력을 보여주는 선행지표입니다. CPI 상승률이 가파른 시기에는 공급업체가 이를 근거로 단가 인상을 요구할 가능성이 커지므로, 장기계약에 물가연동(에스컬레이션) 조항이 있는지 미리 점검하고 핵심 품목은 선제적으로 물량을 확보하거나 단가를 고정하는 협상이 유리합니다. 반대로 상승률이 둔화되는 국면에서는 기존 계약의 단가 인하 재협상이나 신규 계약 시 낮은 기준가 적용을 시도해볼 수 있습니다. 또한 CPI는 연간 예산 수립 시 원가 상승률 가정의 근거 자료로 쓰이며, 환율·유가 동향과 함께 보면 국내외 원가 압력을 종합적으로 판단하는 데 도움이 됩니다.</div>
+      </div>
+      <div class="card">
+        <h3>연도별 요인</h3>
+        
+      <div class="acc-item">
+        <button class="acc-head" data-target="cpi0">
+          <span>2020년 (+0.5%)</span>
+          <svg class="chev" width="16" height="16" viewBox="0 0 16 16"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <div class="acc-body" id="cpi0"><p>코로나19 팬데믹發 수요 위축과 국제유가 급락으로 2년 연속 0%대의 낮은 상승률을 기록했다.</p></div>
+      </div>
+
+      <div class="acc-item">
+        <button class="acc-head" data-target="cpi1">
+          <span>2021년 (+2.5%)</span>
+          <svg class="chev" width="16" height="16" viewBox="0 0 16 16"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <div class="acc-body" id="cpi1"><p>경기회복과 함께 국제 원자재 가격 상승, 글로벌 공급망 병목 현상이 겹치며 상승률이 확대됐다.</p></div>
+      </div>
+
+      <div class="acc-item">
+        <button class="acc-head" data-target="cpi2">
+          <span>2022년 (+5.1%)</span>
+          <svg class="chev" width="16" height="16" viewBox="0 0 16 16"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <div class="acc-body" id="cpi2"><p>러시아-우크라이나 전쟁으로 인한 에너지·곡물가 급등과 고환율이 겹치며 외환위기 이후 최고 상승률을 기록했다.</p></div>
+      </div>
+
+      <div class="acc-item">
+        <button class="acc-head" data-target="cpi3">
+          <span>2023년 (+3.6%)</span>
+          <svg class="chev" width="16" height="16" viewBox="0 0 16 16"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <div class="acc-body" id="cpi3"><p>고금리 기조 속에 물가 안정화가 진행되었으나 여전히 물가안정목표(2%)를 상회하는 3%대 상승률을 이어갔다.</p></div>
+      </div>
+
+      <div class="acc-item">
+        <button class="acc-head" data-target="cpi4">
+          <span>2024년 (+2.3%)</span>
+          <svg class="chev" width="16" height="16" viewBox="0 0 16 16"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <div class="acc-body" id="cpi4"><p>국제유가 안정과 기저효과가 작용하며 3년 만에 2%대로 진입했다.</p></div>
+      </div>
+
+      <div class="acc-item">
+        <button class="acc-head" data-target="cpi5">
+          <span>2025년 (+2.1%)</span>
+          <svg class="chev" width="16" height="16" viewBox="0 0 16 16"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <div class="acc-body" id="cpi5"><p>국제유가 하락과 공공요금 인상폭 완화 등에 힘입어 안정 흐름이 이어졌다(전년 대비 0.2%p 추가 둔화).</p></div>
+      </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head"><h2>3. 환율 5종류</h2><div class="note">구매 실무 관점에서 각 환율이 언제 쓰이는지 정리</div></div>
+    <div class="card">
+      <table class="fxt">
+        <thead><tr><th>구분</th><th>설명</th><th>구매 실무 활용</th></tr></thead>
+        <tbody>
+          
+        <tr>
+          <td class="fxt-name">① 매매기준율<span class="fxt-en">Basic Exchange Rate</span></td>
+          <td class="fxt-desc">서울외국환중개(SMB)가 전날 은행간 시장의 거래량 가중평균으로 산출해 고시하는 &#x27;기준&#x27; 환율. 다른 모든 고시환율(현찰/전신환) 산정의 출발점이 된다.</td>
+          <td class="fxt-use">해외 공급처 견적 비교나 예산 편성 시 가장 먼저 참고하는 기준값. 다만 실제 결제 환율은 아니므로, 발주를 확정하기 전에는 반드시 전신환매도율로 다시 확인해야 한다.</td>
+        </tr>
+
+        <tr>
+          <td class="fxt-name">② 전신환매도율(T/T Selling)<span class="fxt-en">Telegraphic Transfer Selling Rate</span></td>
+          <td class="fxt-desc">은행이 해외로 송금(전신환)해 줄 때 적용하는 환율. 수입대금 송금, 해외 공급처에 대금을 &#x27;전신환&#x27;으로 지급할 때 구매담당자가 실제로 부담하는 환율이다.</td>
+          <td class="fxt-use">해외 공급처에 수입대금을 송금할 때 실제로 적용되는 환율로, 구매 원가에 가장 직접적인 영향을 준다. 견적서·계약서의 환율이 매매기준율로 적혀 있어도, 원가 계산과 발주 확정은 전신환매도율 기준으로 해야 오차가 없다.</td>
+        </tr>
+
+        <tr>
+          <td class="fxt-name">③ 전신환매입율(T/T Buying)<span class="fxt-en">Telegraphic Transfer Buying Rate</span></td>
+          <td class="fxt-desc">해외에서 전신환으로 원화를 받을 때(수출대금 입금 등) 적용하는 환율. 구매 업무에서는 환급/리베이트를 외화로 수취해 원화 전환할 때 참고한다.</td>
+          <td class="fxt-use">해외 공급업체로부터 클레임 환급금·리베이트·반품대금 등을 외화로 돌려받아 원화로 환산할 때 적용되는 환율. 실수령액(원화 기준)을 계산할 때 이 환율을 기준으로 삼아야 한다.</td>
+        </tr>
+
+        <tr>
+          <td class="fxt-name">④ 현찰매도율(Cash Selling)<span class="fxt-en">Cash Selling Rate</span></td>
+          <td class="fxt-desc">은행이 원화를 받고 외화 &#x27;현찰&#x27;을 내줄 때 적용하는 환율. 해외 출장 경비 환전 등에 쓰이며, 운송·보관 비용이 포함되어 전신환보다 환전 시 적용 환율이 불리하다.</td>
+          <td class="fxt-use">해외 출장 경비를 현찰로 환전할 때 적용된다. 환전에 따른 비용 부담이 가장 크므로, 공급업체 대금 결제처럼 금액이 큰 거래는 현찰이 아닌 전신환 방식으로 처리하는 것이 원가 절감에 유리하다.</td>
+        </tr>
+
+        <tr>
+          <td class="fxt-name">⑤ 현찰매입율(Cash Buying)<span class="fxt-en">Cash Buying Rate</span></td>
+          <td class="fxt-desc">은행이 외화 현찰을 받고 원화를 내줄 때 적용하는 환율. 해외 출장 후 잔액 재환전 등에 쓰인다.</td>
+          <td class="fxt-use">출장 후 남은 외화 현찰을 원화로 재환전할 때 적용된다. 재환전 시 환전 비용에 따른 손실이 있으므로, 잔액이 크다면 바로 재환전하기보다 다음 출장 경비로 이월하는 방안도 검토할 만하다.</td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <footer>
+    출처: 상단 요약 카드(USD/CNY·USD/JPY·WTI 유가) — Investing.com 실시간 시세, 2026-09-11 조회 기준(자동 갱신되지 않는 스냅샷). 히스토리 그래프 — FRED(Federal Reserve Economic Data, 세인트루이스 연방준비은행) EXCHUS(위안화)·EXJPUS(엔화) 월평균 환율 시리즈 실측치(fred.stlouisfed.org, 2024.01~2026.08 전 구간 실측치, 추정치 없음), FRED WTISPLC(WTI 현물유가) 월평균 시리즈 실측치(fred.stlouisfed.org/series/WTISPLC, 2023.01~2026.08 전 구간 실측치, 추정치 없음). CPI — 통계청·대한민국 정책브리핑 소비자물가동향 보도자료. 환율 5종류 예시 — 우리은행 고시환율(kgosu.com 보도 인용). 그래프별 전망은 보고서 작성 시점 기준 참고용 의견이며 실제 시장 상황에 따라 달라질 수 있습니다. 실제 결제/회계 처리 시에는 반드시 은행 고시환율 원본을 재확인하시기 바랍니다.
+  </footer>
+</div>
+
+<script>
+  // 이 대시보드의 모든 차트는 외부 라이브러리(CDN) 없이 순수 Canvas API로 직접 그립니다.
+  // 사내망/보안 정책상 외부 스크립트 로드가 차단되는 환경에서도 항상 렌더링되도록 하기 위함입니다.
+  const DATA = {"fx_labels": ["2024-01", "2024-02", "2024-03", "2024-04", "2024-05", "2024-06", "2024-07", "2024-08", "2024-09", "2024-10", "2024-11", "2024-12", "2025-01", "2025-02", "2025-03", "2025-04", "2025-05", "2025-06", "2025-07", "2025-08", "2025-09", "2025-10", "2025-11", "2025-12", "2026-01", "2026-02", "2026-03", "2026-04", "2026-05", "2026-06", "2026-07", "2026-08"], "cny": [7.1707, 7.1935, 7.2015, 7.2374, 7.2327, 7.2547, 7.2609, 7.1475, 7.076, 7.0881, 7.2063, 7.2807, 7.2957, 7.2734, 7.2493, 7.2968, 7.2166, 7.1804, 7.1741, 7.1727, 7.1235, 7.12, 7.1069, 7.0432, 6.9692, 6.9064, 6.8921, 6.8371, 6.7996, 6.7758, 6.7757, 6.7361], "jpy": [146.29, 149.62, 149.82, 153.89, 155.87, 157.86, 157.52, 146.26, 142.95, 149.89, 153.71, 153.81, 156.48, 151.57, 149.06, 144.13, 144.88, 144.48, 147.2, 147.48, 147.86, 151.35, 155.14, 155.92, 156.65, 155.1, 158.68, 159.12, 158.15, 160.77, 162.33, 158.85], "wti_labels": ["2023-01", "2023-02", "2023-03", "2023-04", "2023-05", "2023-06", "2023-07", "2023-08", "2023-09", "2023-10", "2023-11", "2023-12", "2024-01", "2024-02", "2024-03", "2024-04", "2024-05", "2024-06", "2024-07", "2024-08", "2024-09", "2024-10", "2024-11", "2024-12", "2025-01", "2025-02", "2025-03", "2025-04", "2025-05", "2025-06", "2025-07", "2025-08", "2025-09", "2025-10", "2025-11", "2025-12", "2026-01", "2026-02", "2026-03", "2026-04", "2026-05", "2026-06", "2026-07", "2026-08"], "wti": [78.12, 76.83, 73.28, 79.45, 71.58, 70.25, 76.07, 81.39, 89.43, 85.64, 77.69, 71.9, 74.15, 77.25, 81.28, 85.35, 80.02, 79.77, 81.8, 76.68, 70.24, 71.99, 69.95, 70.12, 75.74, 71.53, 68.24, 63.54, 62.17, 68.17, 68.39, 64.86, 63.96, 60.89, 60.06, 57.97, 60.04, 64.51, 91.38, 100.32, 102.13, 84.81, 80.46, 83.9], "cpi_labels": ["2020-01", "2020-02", "2020-03", "2020-04", "2020-05", "2020-06", "2020-07", "2020-08", "2020-09", "2020-10", "2020-11", "2020-12", "2021-01", "2021-02", "2021-03", "2021-04", "2021-05", "2021-06", "2021-07", "2021-08", "2021-09", "2021-10", "2021-11", "2021-12", "2022-01", "2022-02", "2022-03", "2022-04", "2022-05", "2022-06", "2022-07", "2022-08", "2022-09", "2022-10", "2022-11", "2022-12", "2023-01", "2023-02", "2023-03", "2023-04", "2023-05", "2023-06", "2023-07", "2023-08", "2023-09", "2023-10", "2023-11", "2023-12", "2024-01", "2024-02", "2024-03", "2024-04", "2024-05", "2024-06", "2024-07", "2024-08", "2024-09", "2024-10", "2024-11", "2024-12", "2025-01", "2025-02", "2025-03", "2025-04", "2025-05", "2025-06", "2025-07", "2025-08", "2025-09", "2025-10", "2025-11", "2025-12"], "cpi_index": [100.09, 100.16, 99.94, 99.5, 99.44, 99.71, 99.63, 100.19, 100.74, 100.18, 100.09, 100.33, 101.04, 101.58, 101.84, 101.98, 102.05, 102.05, 102.26, 102.75, 103.17, 103.35, 103.87, 104.04, 104.69, 105.3, 106.06, 106.85, 107.56, 108.22, 108.74, 108.62, 108.93, 109.21, 109.1, 109.28, 110.1, 110.38, 110.56, 110.8, 111.13, 111.12, 111.2, 112.33, 112.99, 113.37, 112.74, 112.7, 113.15, 113.77, 113.94, 113.99, 114.2, 113.84, 114.13, 114.54, 114.65, 114.69, 114.4, 114.86, 115.71, 116.08, 116.29, 116.38, 116.27, 116.04, 116.52, 116.45, 117.06, 117.42, 117.2, 117.57], "cpi_yoy": [1.2, 0.9, 0.8, 0.0, -0.2, 0.2, 0.4, 0.8, 0.9, 0.1, 0.6, 0.6, 0.9, 1.4, 1.9, 2.5, 2.6, 2.3, 2.6, 2.6, 2.4, 3.2, 3.8, 3.7, 3.6, 3.7, 4.1, 4.8, 5.4, 6.0, 6.3, 5.7, 5.6, 5.7, 5.0, 5.0, 5.2, 4.8, 4.2, 3.7, 3.3, 2.7, 2.3, 3.4, 3.7, 3.8, 3.3, 3.2, 2.8, 3.1, 3.1, 2.9, 2.8, 2.4, 2.6, 2.0, 1.6, 1.3, 1.5, 1.9, 2.2, 2.0, 2.1, 2.1, 1.9, 1.9, 2.1, 1.7, 2.1, 2.4, 2.4, 2.3], "cny_anno": [{"i": 8, "label": "Fed 빅컷+경기부양 → 강세"}, {"i": 12, "label": "관세우려+금리차 → 약세압력"}, {"i": 31, "label": "20개월 최고, PBOC 개입"}], "jpy_anno": [{"i": 6, "label": "160엔 돌파 → 정부개입"}, {"i": 8, "label": "BOJ긴축+Fed인하기대 → 강세"}, {"i": 30, "label": "164엔 근접, 개입 임박"}, {"i": 31, "label": "공동개입 후 재차 약세"}], "wti_anno": [{"i": 8, "label": "OPEC+ 감산 확대→고점"}, {"i": 15, "label": "후티 공격→고점"}, {"i": 20, "label": "중국 수요둔화→하락"}, {"i": 27, "label": "관세+증산→급락"}, {"i": 35, "label": "4년 만의 최저"}, {"i": 40, "label": "중동전쟁 고점"}, {"i": 43, "label": "공급완화, 재상승"}], "cpi_anno": [{"i": 4, "label": "코로나 디플레이션 저점"}, {"i": 30, "label": "전쟁발 물가충격 정점"}, {"i": 57, "label": "정점 이후 최저 상승률"}]};
+
+  function cssVar(name){ return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
+
+  function ensureTip(box){
+    let tip = box.querySelector('.chart-tip');
+    if(!tip){ tip = document.createElement('div'); tip.className='chart-tip'; box.appendChild(tip); }
+    return tip;
+  }
+
+  function setupCanvas(canvas){
+    const box = canvas.parentElement;
+    const w = box.clientWidth, h = box.clientHeight;
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = Math.max(1, Math.round(w*dpr));
+    canvas.height = Math.max(1, Math.round(h*dpr));
+    const ctx = canvas.getContext('2d');
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+    return { ctx, w, h };
+  }
+
+  function niceGrid(yMin, yMax, ticks){
+    const arr = [];
+    for(let i=0;i<=ticks;i++) arr.push(yMin + (yMax-yMin)*i/ticks);
+    return arr;
+  }
+
+  const CIRCLED = ['①','②','③','④','⑤','⑥','⑦','⑧'];
+
+  // 차트 위에 핵심 변곡점을 숫자 배지 + 짧은 라벨로 고정 표시 (레퍼런스의 '한눈에 보기' 스타일)
+  function roundRectPath(ctx, x, y, w, h, r){
+    ctx.beginPath();
+    ctx.moveTo(x+r, y);
+    ctx.arcTo(x+w, y, x+w, y+h, r);
+    ctx.arcTo(x+w, y+h, x, y+h, r);
+    ctx.arcTo(x, y+h, x, y, r);
+    ctx.arcTo(x, y, x+w, y, r);
+    ctx.closePath();
+  }
+
+  const LINE_EXCLUDE_PX = 14; // 라벨이 가리키는 자기 자신의 데이터 포인트 주변은 겹침 판정에서 제외(화살표가 닿는 부분)
+
+  // 폴리라인(xs, ys, 캔버스 픽셀 좌표)이 x범위 [x0, x1] 안에서 지나가는 y값의 (최소, 최대)를
+  // 선분 보간으로 계산한다. 겹치는 구간이 없으면 null.
+  function segMinMaxY(xs, ys, x0, x1){
+    let ymin = null, ymax = null;
+    for(let i=0;i<xs.length-1;i++){
+      const ax0 = xs[i], ax1 = xs[i+1], ay0 = ys[i], ay1 = ys[i+1];
+      const lo = Math.min(ax0, ax1), hi = Math.max(ax0, ax1);
+      if(hi < x0 || lo > x1) continue;
+      const segX0 = Math.max(lo, x0), segX1 = Math.min(hi, x1);
+      for(const sx of [segX0, segX1]){
+        const sy = ax1 === ax0 ? ay0 : ay0 + (sx - ax0) / (ax1 - ax0) * (ay1 - ay0);
+        ymin = ymin === null ? sy : Math.min(ymin, sy);
+        ymax = ymax === null ? sy : Math.max(ymax, sy);
+      }
+    }
+    return ymin === null ? null : [ymin, ymax];
+  }
+
+  // 박스의 x범위 중, 라벨 자신의 데이터 포인트 주변(exclude 구간, 화살표가 자연스럽게 선에
+  // 닿는 부분)을 제외한 나머지 구간에서 선이 지나가는 y범위를 구한다.
+  function lineClear(xs, ys, boxX0, boxX1, exclX0, exclX1){
+    const segments = [];
+    if(boxX0 < exclX0) segments.push([boxX0, Math.min(boxX1, exclX0)]);
+    if(boxX1 > exclX1) segments.push([Math.max(boxX0, exclX1), boxX1]);
+    let result = null;
+    for(const [sx0, sx1] of segments){
+      if(sx1 <= sx0) continue;
+      const r = segMinMaxY(xs, ys, sx0, sx1);
+      if(r) result = result ? [Math.min(result[0], r[0]), Math.max(result[1], r[1])] : r;
+    }
+    return result;
+  }
+
+  function drawAnnotations(ctx, xAt, yAt, values, annotations, color, pad, w, plotH, combo){
+    // combo(선택): {values2, yFmt, y2Fmt} — 주어지면 라벨에 "① 설명 (지수 / 전년동월대비)"처럼
+    // 두 값을 함께 표기한다(물가 "수준"과 "속도"를 한 라벨에서 동시에 보여주기 위함).
+    if(!annotations || !annotations.length) return;
+    const font = "9px 'IBM Plex Sans KR','IBM Plex Mono',sans-serif";
+    ctx.font = font;
+    const surface = cssVar('--surface');
+    const midY = pad.t + plotH/2;
+    const gapPx = 6;
+    const BOX_H = 16;   // 라벨 상자 높이(패딩 포함) 픽셀
+    const BASE_PX = 18; // 데이터 포인트 → 레벨0 라벨까지 기본 거리
+    const LEVEL_PX = 22; // 레벨 하나당 추가 거리(상자 높이+여유)
+    const dist = level => BASE_PX + level * LEVEL_PX;
+
+    // 1단계: 각 라벨의 위치/텍스트폭을 먼저 계산
+    // (라벨 실제 폭(tw)을 기준으로 좌우 여백을 잡아야, 긴 라벨이 캔버스 오른쪽 끝
+    // 근처 지점에 붙었을 때 잘리지 않는다 — 고정폭 52px 가정은 짧은 라벨엔 과하고
+    // 긴 라벨엔 부족했다.)
+    const items = annotations.map((a, i2)=>{
+      const x = xAt(a.i), y = yAt(values[a.i]);
+      const below = y < midY;
+      const valueStr = !combo ? '' : combo.values2
+        ? ` (${combo.yFmt(values[a.i])} / ${combo.y2Fmt(combo.values2[a.i])})`
+        : ` (${combo.yFmt(values[a.i])})`;
+      const label = (CIRCLED[i2]||('#'+(i2+1))) + ' ' + a.label + valueStr;
+      const tw = ctx.measureText(label).width;
+      const half = tw/2 + 6;
+      const lo = pad.l + half, hi = w - half;
+      const lx = lo > hi ? x : Math.min(Math.max(x, lo), hi);
+      return { x, y, below, label, lx, tw };
+    });
+
+    // 2단계: 같은 방향(위/아래)의 라벨끼리, 이미 배치된 라벨과 가로로 겹치지 않는
+    // 가장 낮은 단(level)을 찾아 배치한다 (가까운 변곡점이 여러 개 몰려도 서로 겹치지 않도록 전수 비교)
+    // — 이건 어디까지나 초기 추정치일 뿐이다. 인접한 두 지점의 값 차이가 크면, 서로 다른
+    // 레벨이어도 (레벨 오프셋) - (값 차이)가 우연히 비슷해져 최종 라벨 높이가 겹칠 수 있다.
+    const placed = [];
+    items.forEach(it=>{
+      let level = 0;
+      while(true){
+        const x1 = it.lx - it.tw/2 - gapPx, x2 = it.lx + it.tw/2 + gapPx;
+        const collide = placed.some(p => p.level === level && p.below === it.below && !(x2 < p.x1 || x1 > p.x2));
+        if(!collide) break;
+        level++;
+      }
+      it.level = level;
+      placed.push({ level, below: it.below, x1: it.lx - it.tw/2 - gapPx, x2: it.lx + it.tw/2 + gapPx });
+    });
+
+    // 라벨 상자가 (자기 자신이 가리키는 지점 근처를 제외한) 실제 꺾은선 경로와 겹치는지도
+    // 함께 검사한다 — 라벨끼리는 안 겹쳐도, 인접 구간의 값이 크게 변하면 선 자체가 라벨
+    // 위로 지나갈 수 있다(예: 라벨은 낮은 값 근처인데 바로 다음 데이터가 훨씬 높은 값으로
+    // 치솟는 경우). 보조축(우측) 선까지 함께 확인하면, 값 변동폭이 큰 구간에서 레벨이 계속
+    // 올라가며 라벨이 차트 바깥(축 아래)까지 밀려나는 경우가 있어 기본선(좌축)만 검사한다.
+    const linePaths = [{ xs: values.map((_,i)=>xAt(i)), ys: values.map(v=>yAt(v)) }];
+    // 라벨 상자가 넓을 때(긴 텍스트, 좁은 차트) 상자 전체 폭을 그대로 검사 범위로 쓰면 그
+    // 구간 안에서 선이 오르내리는 전체 폭을 다 커버해야 해서 레벨이 끝없이 올라가며 라벨이
+    // 차트 바깥까지 밀려날 수 있다. 화살표가 실제로 가리키는 지점 주변(로컬 구간)만
+    // 검사해 "라벨 텍스트 바로 아래/위로 선이 지나가는" 핵심 문제만 잡는다.
+    const LINE_CHECK_RADIUS = 60;
+    const MAX_LINE_LEVEL = 4; // 로컬 검사만 해도 여전히 겹치면(가파른 구간) 여기서 포기하고 차트 밖으로 밀려나지 않게 한다
+
+    // 3단계: 실제 라벨 상자의 화면 좌표(사각형)를 계산해 같은 방향끼리 겹치거나 실제 선과
+    // 겹치면 레벨을 올리고 다시 계산 — 값 차이 때문에 위 추정이 틀린 경우를 실측 기반으로
+    // 바로잡는다.
+    for(let iter=0; iter<6; iter++){
+      const boxes = items.map(it=>{
+        const d = dist(it.level);
+        const labelY = it.below ? it.y + d : it.y - d;
+        const boxY = it.below ? labelY : labelY - BOX_H;
+        return { x1: it.lx - it.tw/2 - 4, x2: it.lx + it.tw/2 + 4, y1: boxY - 2, y2: boxY + BOX_H + 2 };
+      });
+      let changed = false;
+      for(let i=0;i<items.length;i++){
+        for(let j=i+1;j<items.length;j++){
+          // 같은 방향(위/아래)끼리는 물론, 서로 반대 방향이라도 중앙쪽으로 몰리며 실제
+          // 화면에서 겹치는 경우가 있다(예: 값이 높아 아래로 내려온 라벨과 값이 낮아 위로
+          // 올라온 라벨이 중간 지점에서 만나는 경우) — 방향에 관계없이 실제 겹침만 본다.
+          // 레벨을 올리면 두 라벨 모두 자기 방향(위/아래)으로 더 밀려나 서로 멀어지므로
+          // 반대 방향끼리도 안전하게 수렴한다.
+          const bi = boxes[i], bj = boxes[j];
+          const overlap = !(bi.x2 < bj.x1 || bj.x2 < bi.x1 || bi.y2 < bj.y1 || bj.y2 < bi.y1);
+          if(overlap){ items[j].level += 1; changed = true; }
+        }
+      }
+      items.forEach((it, i)=>{
+        if(it.level >= MAX_LINE_LEVEL) return;
+        const box = boxes[i];
+        const exclX0 = it.x - LINE_EXCLUDE_PX, exclX1 = it.x + LINE_EXCLUDE_PX;
+        const checkX0 = Math.max(box.x1, it.x - LINE_CHECK_RADIUS), checkX1 = Math.min(box.x2, it.x + LINE_CHECK_RADIUS);
+        if(checkX1 <= checkX0) return;
+        for(const { xs, ys } of linePaths){
+          const r = lineClear(xs, ys, checkX0, checkX1, exclX0, exclX1);
+          if(r && !(box.y2 + 3 < r[0] || r[1] + 3 < box.y1)){ it.level += 1; changed = true; }
+        }
+      });
+      if(!changed) break;
+    }
+
+    // 4단계: 실제 드로잉
+    items.forEach(it=>{
+      const { x, y, below, label, lx, tw, level } = it;
+      const d = dist(level);
+      const labelY = below ? y + d : y - d;
+      ctx.strokeStyle = color; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(x, y + (below?3:-3)); ctx.lineTo(x, labelY + (below?-9:9)); ctx.stroke();
+      ctx.beginPath(); ctx.fillStyle = color; ctx.arc(x, y, 3, 0, Math.PI*2); ctx.fill();
+      ctx.lineWidth = 1.2; ctx.strokeStyle = surface; ctx.stroke();
+
+      ctx.textAlign = 'center';
+      ctx.textBaseline = below ? 'top' : 'bottom';
+
+      // background pill so the plotted line/fill never crosses the label text
+      ctx.font = font;
+      const padX = 4, padY = 2, boxH = 12;
+      const boxY = below ? labelY : labelY - boxH;
+      ctx.fillStyle = surface;
+      ctx.globalAlpha = 0.92;
+      roundRectPath(ctx, lx - tw/2 - padX, boxY - padY, tw + padX*2, boxH + padY*2, 3);
+      ctx.fill();
+      ctx.globalAlpha = 1;
+
+      ctx.fillStyle = color;
+      ctx.fillText(label, lx, labelY);
+    });
+  }
+
+  // ---------- line chart (no external deps) ----------
+  function lineChart(canvas, labels, values, colorVar, yFmt, annotations){
+    const box = canvas.parentElement;
+    const tip = ensureTip(box);
+    const pad = { l: 46, r: 12, t: 12, b: 22 };
+
+    function render(hoverIdx){
+      const { ctx, w, h } = setupCanvas(canvas);
+      const color = cssVar(colorVar);
+      const border = cssVar('--border');
+      const muted = cssVar('--muted');
+      const min = Math.min(...values), max = Math.max(...values);
+      const span = (max-min) || Math.abs(max||1)*0.1 || 1;
+      const yMin = min - span*0.12, yMax = max + span*0.12;
+      const plotW = Math.max(1, w-pad.l-pad.r), plotH = Math.max(1, h-pad.t-pad.b);
+      const xAt = i => pad.l + (values.length<=1 ? plotW/2 : (i/(values.length-1))*plotW);
+      const yAt = v => pad.t + plotH - ((v-yMin)/(yMax-yMin))*plotH;
+
+      ctx.clearRect(0,0,w,h);
+      ctx.font = "11px 'IBM Plex Mono','IBM Plex Sans KR',sans-serif";
+
+      // gridlines + y labels
+      ctx.strokeStyle = border; ctx.fillStyle = muted; ctx.lineWidth = 1;
+      niceGrid(yMin, yMax, 4).forEach(v=>{
+        const y = yAt(v);
+        ctx.beginPath(); ctx.moveTo(pad.l, y+0.5); ctx.lineTo(w-pad.r, y+0.5); ctx.stroke();
+        ctx.textAlign='right'; ctx.textBaseline='middle';
+        ctx.fillText(yFmt(v), pad.l-8, y);
+      });
+
+      // x labels (subset so they don't overlap) — tick count scales with available width
+      const minLabelSpacing = 52;
+      const maxTicks = Math.max(3, Math.floor(plotW/minLabelSpacing));
+      const step = Math.max(1, Math.ceil(labels.length/maxTicks));
+      ctx.textAlign='center'; ctx.textBaseline='top';
+      let lastShownIdx = -1;
+      for(let i=0;i<labels.length;i+=step){
+        ctx.fillText(labels[i], xAt(i), h-pad.b+6);
+        lastShownIdx = i;
+      }
+      // 마지막 라벨은 직전에 찍힌 라벨과 겹치지 않을 만큼 간격이 있을 때만 추가로 표시
+      if(lastShownIdx !== labels.length-1 && (xAt(labels.length-1) - xAt(lastShownIdx)) >= minLabelSpacing*0.8){
+        ctx.fillText(labels[labels.length-1], xAt(labels.length-1), h-pad.b+6);
+      }
+
+      // filled area
+      ctx.beginPath();
+      values.forEach((v,i)=>{ const x=xAt(i), y=yAt(v); i===0?ctx.moveTo(x,y):ctx.lineTo(x,y); });
+      ctx.lineTo(xAt(values.length-1), pad.t+plotH);
+      ctx.lineTo(xAt(0), pad.t+plotH);
+      ctx.closePath();
+      ctx.fillStyle = color+'22';
+      ctx.fill();
+
+      // line
+      ctx.beginPath();
+      values.forEach((v,i)=>{ const x=xAt(i), y=yAt(v); i===0?ctx.moveTo(x,y):ctx.lineTo(x,y); });
+      ctx.strokeStyle = color; ctx.lineWidth = 2; ctx.lineJoin='round'; ctx.lineCap='round';
+      ctx.stroke();
+
+      drawAnnotations(ctx, xAt, yAt, values, annotations, color, pad, w, plotH, { yFmt });
+
+      if(hoverIdx!=null){
+        const x = xAt(hoverIdx), y = yAt(values[hoverIdx]);
+        ctx.beginPath(); ctx.strokeStyle = border; ctx.setLineDash([3,3]);
+        ctx.moveTo(x, pad.t); ctx.lineTo(x, pad.t+plotH); ctx.stroke(); ctx.setLineDash([]);
+        ctx.beginPath(); ctx.fillStyle = color; ctx.arc(x,y,3.5,0,Math.PI*2); ctx.fill();
+        ctx.lineWidth = 1.5; ctx.strokeStyle = cssVar('--surface'); ctx.stroke();
+      }
+      return { xAt, plotW, pad };
+    }
+
+    let last = render(null);
+
+    function onMove(e){
+      const rect = canvas.getBoundingClientRect();
+      const mx = e.clientX - rect.left;
+      const frac = Math.min(1, Math.max(0, (mx-last.pad.l)/last.plotW));
+      const idx = Math.round(frac*(values.length-1));
+      last = render(idx);
+      const x = last.xAt(idx);
+      tip.style.opacity = 1;
+      tip.style.left = Math.min(Math.max(x, 44), box.clientWidth-44) + 'px';
+      tip.style.top = '6px';
+      tip.innerHTML = `<b>${labels[idx]}</b><br>${yFmt(values[idx])}`;
+    }
+    function onLeave(){ last = render(null); tip.style.opacity = 0; }
+
+    canvas.addEventListener('mousemove', onMove);
+    canvas.addEventListener('mouseleave', onLeave);
+    return () => { last = render(null); };
+  }
+
+  // ---------- dual-axis line chart (지수 + 전년동월대비, no external deps) ----------
+  function dualLineChart(canvas, labels, values, values2, colorVar, colorVar2, yFmt, y2Fmt, annotations){
+    const box = canvas.parentElement;
+    const tip = ensureTip(box);
+    const pad = { l: 44, r: 44, t: 12, b: 22 };
+
+    function render(hoverIdx){
+      const { ctx, w, h } = setupCanvas(canvas);
+      const color = cssVar(colorVar);
+      const color2 = cssVar(colorVar2);
+      const border = cssVar('--border');
+      const muted = cssVar('--muted');
+      const min = Math.min(...values), max = Math.max(...values);
+      const span = (max-min) || Math.abs(max||1)*0.1 || 1;
+      const yMin = min - span*0.12, yMax = max + span*0.12;
+      const min2 = Math.min(...values2), max2 = Math.max(...values2);
+      const span2 = (max2-min2) || Math.abs(max2||1)*0.1 || 1;
+      const yMin2 = min2 - span2*0.18, yMax2 = max2 + span2*0.18;
+      const plotW = Math.max(1, w-pad.l-pad.r), plotH = Math.max(1, h-pad.t-pad.b);
+      const xAt = i => pad.l + (values.length<=1 ? plotW/2 : (i/(values.length-1))*plotW);
+      const yAt = v => pad.t + plotH - ((v-yMin)/(yMax-yMin))*plotH;
+      const yAt2 = v => pad.t + plotH - ((v-yMin2)/(yMax2-yMin2))*plotH;
+
+      ctx.clearRect(0,0,w,h);
+      ctx.font = "11px 'IBM Plex Mono','IBM Plex Sans KR',sans-serif";
+
+      // gridlines(기준: 좌축=지수) + 좌축 라벨
+      ctx.lineWidth = 1;
+      niceGrid(yMin, yMax, 4).forEach(v=>{
+        const y = yAt(v);
+        ctx.strokeStyle = border;
+        ctx.beginPath(); ctx.moveTo(pad.l, y+0.5); ctx.lineTo(w-pad.r, y+0.5); ctx.stroke();
+        ctx.fillStyle = color;
+        ctx.textAlign='right'; ctx.textBaseline='middle';
+        ctx.fillText(yFmt(v), pad.l-8, y);
+      });
+      // 우축(전년동월대비) 라벨 — 그리드는 좌축 기준선을 공유하고, 우측엔 값만 별도로 표기
+      ctx.fillStyle = color2;
+      niceGrid(yMin2, yMax2, 4).forEach(v=>{
+        const y = yAt2(v);
+        ctx.textAlign='left'; ctx.textBaseline='middle';
+        ctx.fillText(y2Fmt(v), w-pad.r+8, y);
+      });
+
+      // x labels
+      const minLabelSpacing = 52;
+      const maxTicks = Math.max(3, Math.floor(plotW/minLabelSpacing));
+      const step = Math.max(1, Math.ceil(labels.length/maxTicks));
+      ctx.fillStyle = muted;
+      ctx.textAlign='center'; ctx.textBaseline='top';
+      let lastShownIdx = -1;
+      for(let i=0;i<labels.length;i+=step){
+        ctx.fillText(labels[i], xAt(i), h-pad.b+6);
+        lastShownIdx = i;
+      }
+      if(lastShownIdx !== labels.length-1 && (xAt(labels.length-1) - xAt(lastShownIdx)) >= minLabelSpacing*0.8){
+        ctx.fillText(labels[labels.length-1], xAt(labels.length-1), h-pad.b+6);
+      }
+
+      // 전년동월대비(우축) — 점선
+      ctx.beginPath();
+      values2.forEach((v,i)=>{ const x=xAt(i), y=yAt2(v); i===0?ctx.moveTo(x,y):ctx.lineTo(x,y); });
+      ctx.strokeStyle = color2; ctx.lineWidth = 1.6; ctx.lineJoin='round'; ctx.lineCap='round';
+      ctx.setLineDash([5,3]);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      // 지수(좌축) — 채우기 + 실선
+      ctx.beginPath();
+      values.forEach((v,i)=>{ const x=xAt(i), y=yAt(v); i===0?ctx.moveTo(x,y):ctx.lineTo(x,y); });
+      ctx.lineTo(xAt(values.length-1), pad.t+plotH);
+      ctx.lineTo(xAt(0), pad.t+plotH);
+      ctx.closePath();
+      ctx.fillStyle = color+'22';
+      ctx.fill();
+
+      ctx.beginPath();
+      values.forEach((v,i)=>{ const x=xAt(i), y=yAt(v); i===0?ctx.moveTo(x,y):ctx.lineTo(x,y); });
+      ctx.strokeStyle = color; ctx.lineWidth = 2; ctx.lineJoin='round'; ctx.lineCap='round';
+      ctx.stroke();
+
+      drawAnnotations(ctx, xAt, yAt, values, annotations, color, pad, w, plotH, { values2, yFmt, y2Fmt, yAt2 });
+
+      if(hoverIdx!=null){
+        const x = xAt(hoverIdx), y = yAt(values[hoverIdx]), y2 = yAt2(values2[hoverIdx]);
+        ctx.beginPath(); ctx.strokeStyle = border; ctx.setLineDash([3,3]);
+        ctx.moveTo(x, pad.t); ctx.lineTo(x, pad.t+plotH); ctx.stroke(); ctx.setLineDash([]);
+        ctx.beginPath(); ctx.fillStyle = color; ctx.arc(x,y,3.5,0,Math.PI*2); ctx.fill();
+        ctx.lineWidth = 1.5; ctx.strokeStyle = cssVar('--surface'); ctx.stroke();
+        ctx.beginPath(); ctx.fillStyle = color2; ctx.arc(x,y2,3.2,0,Math.PI*2); ctx.fill();
+        ctx.lineWidth = 1.3; ctx.strokeStyle = cssVar('--surface'); ctx.stroke();
+      }
+      return { xAt, plotW, pad };
+    }
+
+    let last = render(null);
+
+    function onMove(e){
+      const rect = canvas.getBoundingClientRect();
+      const mx = e.clientX - rect.left;
+      const frac = Math.min(1, Math.max(0, (mx-last.pad.l)/last.plotW));
+      const idx = Math.round(frac*(values.length-1));
+      last = render(idx);
+      const x = last.xAt(idx);
+      tip.style.opacity = 1;
+      tip.style.left = Math.min(Math.max(x, 66), box.clientWidth-66) + 'px';
+      tip.style.top = '6px';
+      tip.innerHTML = `<b>${labels[idx]}</b><br>${yFmt(values[idx])} / ${y2Fmt(values2[idx])}`;
+    }
+    function onLeave(){ last = render(null); tip.style.opacity = 0; }
+
+    canvas.addEventListener('mousemove', onMove);
+    canvas.addEventListener('mouseleave', onLeave);
+    return () => { last = render(null); };
+  }
+
+  // ---------- bar chart (no external deps) ----------
+  function barChart(canvas, labels, values, colorVar, yFmt){
+    const box = canvas.parentElement;
+    const tip = ensureTip(box);
+    const pad = { l: 40, r: 10, t: 10, b: 20 };
+
+    function render(hoverIdx){
+      const { ctx, w, h } = setupCanvas(canvas);
+      const color = cssVar(colorVar);
+      const border = cssVar('--border');
+      const muted = cssVar('--muted');
+      const min = Math.min(0, ...values), max = Math.max(...values);
+      const span = (max-min) || 1;
+      const yMin = min, yMax = max + span*0.15;
+      const plotW = Math.max(1, w-pad.l-pad.r), plotH = Math.max(1, h-pad.t-pad.b);
+      const slot = plotW/values.length;
+      const barW = Math.min(34, slot*0.55);
+      const yAt = v => pad.t + plotH - ((v-yMin)/(yMax-yMin))*plotH;
+
+      ctx.clearRect(0,0,w,h);
+      ctx.font = "11px 'IBM Plex Mono','IBM Plex Sans KR',sans-serif";
+      ctx.strokeStyle = border; ctx.fillStyle = muted; ctx.lineWidth = 1;
+      niceGrid(yMin, yMax, 3).forEach(v=>{
+        const y = yAt(v);
+        ctx.beginPath(); ctx.moveTo(pad.l, y+0.5); ctx.lineTo(w-pad.r, y+0.5); ctx.stroke();
+        ctx.textAlign='right'; ctx.textBaseline='middle';
+        ctx.fillText(yFmt(v), pad.l-6, y);
+      });
+
+      const y0 = yAt(0);
+      values.forEach((v,i)=>{
+        const cx = pad.l + slot*i + slot/2;
+        const y = yAt(v);
+        const isHover = i===hoverIdx;
+        ctx.fillStyle = isHover ? color : color+'cc';
+        const top = Math.min(y0,y), h2 = Math.max(2, Math.abs(y0-y));
+        ctx.fillRect(cx-barW/2, top, barW, h2);
+        ctx.textAlign='center'; ctx.textBaseline='top'; ctx.fillStyle = muted;
+        ctx.fillText(labels[i], cx, h-pad.b+4);
+      });
+      return { pad, slot };
+    }
+
+    let last = render(null);
+    function onMove(e){
+      const rect = canvas.getBoundingClientRect();
+      const mx = e.clientX - rect.left;
+      let idx = Math.floor((mx-last.pad.l)/last.slot);
+      idx = Math.min(values.length-1, Math.max(0, idx));
+      last = render(idx);
+      const cx = last.pad.l + last.slot*idx + last.slot/2;
+      tip.style.opacity = 1;
+      tip.style.left = Math.min(Math.max(cx, 44), box.clientWidth-44) + 'px';
+      tip.style.top = '6px';
+      tip.innerHTML = `<b>${labels[idx]}</b><br>${yFmt(values[idx])}`;
+    }
+    function onLeave(){ last = render(null); tip.style.opacity = 0; }
+    canvas.addEventListener('mousemove', onMove);
+    canvas.addEventListener('mouseleave', onLeave);
+    return () => { last = render(null); };
+  }
+
+  const redraws = [];
+  function initCharts(){
+    redraws.length = 0;
+    redraws.push(lineChart(document.getElementById('chartCNY'), DATA.fx_labels, DATA.cny, '--cny', v=>v.toFixed(2), DATA.cny_anno));
+    redraws.push(lineChart(document.getElementById('chartJPY'), DATA.fx_labels, DATA.jpy, '--jpy', v=>v.toFixed(1), DATA.jpy_anno));
+    redraws.push(lineChart(document.getElementById('chartWTI'), DATA.wti_labels, DATA.wti, '--wti', v=>'$'+v.toFixed(0), DATA.wti_anno));
+    redraws.push(dualLineChart(document.getElementById('chartCPI'), DATA.cpi_labels, DATA.cpi_index, DATA.cpi_yoy,
+      '--cpi', '--cpi2', v=>v.toFixed(1), v=>(v>=0?'+':'')+v.toFixed(1)+'%', DATA.cpi_anno));
+  }
+
+  let resizeTimer;
+  window.addEventListener('resize', () => {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(initCharts, 120);
+  });
+
+  function init(){
+    initCharts();
+
+    document.querySelectorAll('.acc-head').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const item = btn.parentElement;
+        const wasOpen = item.classList.contains('open');
+        item.parentElement.querySelectorAll('.acc-item').forEach(el=>el.classList.remove('open'));
+        if(!wasOpen) item.classList.add('open');
+      });
+    });
+    // open first item of each accordion group by default
+    document.querySelectorAll('.card').forEach(card=>{
+      const first = card.querySelector('.acc-item');
+      if(first) first.classList.add('open');
+    });
+  }
+
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+</script>
